@@ -1,0 +1,90 @@
+managed implementation in class ZRAP100_BP_TRAVELTP_200 unique;
+strict ( 2 );
+with draft;
+define behavior for ZRAP100_R_TRAVELTP_200 alias Travel
+persistent table zrap100_atrav200
+draft table zrap100_dtrav200
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master ( global )
+early numbering
+{
+  //field ( mandatory : create )
+  // TravelId;
+
+  field ( readonly )
+  CreatedBy,
+  CreatedAt,
+  LocalLastChangedBy,
+  LocalLastChangedAt,
+  LastChangedAt;
+
+  //field ( readonly : update )
+  field ( readonly )
+  TravelId;
+
+  //加上這段檢查 / 確保這些欄位不能為空值
+  field ( mandatory )
+  CustomerID,
+  BeginDate,
+  EndDate;
+
+  create;
+  //update;  //原本
+  //delete;
+  update ( features : instance );
+  delete ( features : instance );
+
+  determination setStatusToOpen on modify { create; }   // 可以有幾個determination ?
+
+  validation validateCustomer on save { create; field CustomerID; }
+  validation validateDates on save { create; field BeginDate, EndDate; }
+
+  //action deductDiscount parameter /dmo/a_travel_discount result [1] $self;  //會讓畫面跳出輸入參數的資訊
+  //action deductDiscount result [1] $self;     //原本的功能
+  action ( features : instance ) deductDiscount parameter /dmo/a_travel_discount result [1] $self;
+  factory action copyTravel [1];
+
+  //action acceptTravel result [1] $self;       //原本
+  //action rejectTravel result [1] $self;
+  action ( features : instance ) acceptTravel result [1] $self;
+  action ( features : instance ) rejectTravel result [1] $self;
+
+
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  //draft determine action Prepare;     //原本的，變成下方描述
+  draft determine action Prepare        //就是變成在草稿時，也會做檢查
+  {
+    validation validateCustomer;
+    validation validateDates; }
+
+
+
+
+
+  mapping for zrap100_atrav200
+    {
+      TravelId           = travel_id;
+      AgencyId           = agency_id;
+      CustomerId         = customer_id;
+      BeginDate          = begin_date;
+      EndDate            = end_date;
+      BookingFee         = booking_fee;
+      TotalPrice         = total_price;
+      CurrencyCode       = currency_code;
+      Description        = description;
+      OverallStatus      = overall_status;
+      Attachment         = attachment;
+      MimeType           = mime_type;
+      FileName           = file_name;
+      CreatedBy          = created_by;
+      CreatedAt          = created_at;
+      LocalLastChangedBy = local_last_changed_by;
+      LocalLastChangedAt = local_last_changed_at;
+      LastChangedAt      = last_changed_at;
+    }
+}
